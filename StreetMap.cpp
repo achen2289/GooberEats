@@ -28,6 +28,7 @@ StreetMapImpl::StreetMapImpl()
 
 StreetMapImpl::~StreetMapImpl()
 {
+//    m_hashMap->clearMap();
 }
 
 bool StreetMapImpl::load(string mapFile)

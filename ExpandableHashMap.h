@@ -108,12 +108,12 @@ void ExpandableHashMap<KeyType, ValueType>::associate(const KeyType& key, const 
         m_buckets *= 2; // double number of buckets
         m_hashTable.resize(m_buckets); // resize original hash map
         
-        m_hashTable = m_newStreetSegments; // shallow copy all lists and Pair pointers back into original hash map
+        m_hashTable = m_newHashTable; // shallow copy all lists and Pair pointers back into original hash map
         
         // loop through temp hash map and assign Pair pointers to nullptr
-        for (auto itr = m_newStreetSegments.begin(); itr != m_newStreetSegments.end(); itr++)
+        for (auto itr = m_newHashTable.begin(); itr != m_newHashTable.end(); itr++)
         {
-            for (auto itr2 = itr.begin(); itr2 != itr.end(); itr2++)
+            for (auto itr2 = (*itr).begin(); itr2 != (*itr).end(); itr2++)
                 (*itr2) = nullptr;
         }
     }
