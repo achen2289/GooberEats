@@ -1,5 +1,5 @@
 //
-//  ExpandableHashMap.hpp
+//  ExpandableHashMap.h
 //  proj4
 //
 //  Created by Alex Chen on 3/5/20.
@@ -42,11 +42,11 @@ private:
     {
         KeyType m_key;
         ValueType m_value;
-    }
+    };
     
     void clearMap();
     
-    std::vector<std::list<Pair*>> m_hashTable(8); // hash table is a vector containing a list of Pairs of GeoCoords and vector of street segments
+    std::vector<std::list<Pair*>> m_hashTable; // hash table is a vector containing a list of Pairs of GeoCoords and vector of street segments
     int m_buckets; // number of buckets
     int m_associations; // each bucket will have a certain number of associations (num of Pairs in linked list)
     double m_maxLoad; // max load of hash map
@@ -57,6 +57,7 @@ private:
 template<typename KeyType, typename ValueType>
 ExpandableHashMap<KeyType, ValueType>::ExpandableHashMap(double maximumLoadFactor)
 {
+    m_hashTable(8);
     m_buckets = 8; // initialize size of hash table
     m_associations = 0; // number of key value pairs
     if (maximumLoadFactor <= 0) // initialize max load of hash table
@@ -91,38 +92,30 @@ void ExpandableHashMap<KeyType, ValueType>::associate(const KeyType& key, const 
 {
     if (((m_associations+1) / m_buckets) > m_maxLoad)
     {
-        std::vector<std::list<Pair>>(2*m_buckets) m_newHashTable; // new hash table
+        std::vector<std::list<Pair*>> m_newHashTable; // new hash table
+        m_newHashTable.resize(2*m_buckets);
         
         // rehash all linked lists inside existing buckets and add to new container
         for (int i=0; i<m_buckets; i++)
         {
-//            auto itr = m_hashTable[i].begin(); // iterator to first element of list
-//            if (itr == m_hashTable[i].end()) // if no elements in list
-//                continue;
-//            h = getHashResult((*itr).m_key); // get hash result for that bucket
-//            h = h % (m_buckets*2) // get bucket number for new hash table
-            
             for (auto itr = m_hashTable[i].begin(); itr != m_hashTable[i].end(); itr++)
             {
-                
+                unsigned int h = getHashResult((*itr)->m_key);
+                m_newHashTable[h%(2*m_buckets)].push_back((*itr));
             }
-            
-            // place list in old bucket into bucket of new hash table
-            m_newHashTable[h].splice(m_newStreetSegments[h].begin(), m_hashTable[i], itr, m_hashTable[i].end());
         }
         
-        // clear up elements of old container
-        // might not be necessary
-        for (auto itr = m_hashTable.begin(); itr != m_hashTable.end(); )) // free up street segments container
-            itr = m_hashTable.erase(itr);
-        
         m_buckets *= 2; // double number of buckets
-        m_hashTable.resize(m_buckets);
+        m_hashTable.resize(m_buckets); // resize original hash map
         
-        // copy over linked lists in buckets into original container
-        // m_hashTable = m_newStreetSegments; // assign street segments container to new street segment container
-        for (int i=0; i<m_newHashTable.size(); i++)
-            m_hashTable[i] = m_newHashTable[i];
+        m_hashTable = m_newStreetSegments; // shallow copy all lists and Pair pointers back into original hash map
+        
+        // loop through temp hash map and assign Pair pointers to nullptr
+        for (auto itr = m_newStreetSegments.begin(); itr != m_newStreetSegments.end(); itr++)
+        {
+            for (auto itr2 = itr.begin(); itr2 != itr.end(); itr2++)
+                (*itr2) = nullptr;
+        }
     }
     ValueType* result = find(key);
     
@@ -130,7 +123,7 @@ void ExpandableHashMap<KeyType, ValueType>::associate(const KeyType& key, const 
     if (result == nullptr)
     {
         unsigned int h = getHashResult(key) % m_buckets;
-        m_hashTable[h].push_back(new Pair(key, value));
+        m_hashTable[h].push_back(new Pair{key, value});
         m_associations++;
         return;
     }
@@ -144,28 +137,21 @@ const ValueType* ExpandableHashMap<KeyType, ValueType>::find(const KeyType& key)
     for (auto itr = m_hashTable[h].begin(); itr != m_hashTable[h].end(); itr++)
     {
         // if key is found, return address of m_value
-        if ((*itr).m_key == key)
-            return &(*itr).m_value;
+        if ((*itr)->m_key == key)
+            return &(*itr)->m_value;
     }
-//    m_hashTable[h].push_back(new Pair); // if key not found, create new Pair
-//    m_associations++; // additional association
-//    auto itr = m_hashTable[h].end(); // iterator to that new pair
-//    itr--;
-//    (*itr).m_key = key; // set new Pair key value to key
-//    return &(*itr).m_value; // return address of new Pair value
-    
     return nullptr; // return nullptr if key not found
 }
 
 template<typename KeyType, typename ValueType>
 void ExpandableHashMap<KeyType, ValueType>::clearMap()
 {
-    for (auto itr = m_hashTable.begin(); itr != m_hashTable.end(); ))
+    for (auto itr = m_hashTable.begin(); itr != m_hashTable.end(); )
     {
-        for (auto itr2 = itr.begin(); itr2 != itr.end(); )
+        for (auto itr2 = (*itr).begin(); itr2 != (*itr).end(); )
         {
-            delete itr2;
-            itr2 = itr.erase(itr2);
+            delete *itr2;
+            itr2 = (*itr).erase(itr2);
         }
         itr = m_hashTable.erase(itr);
     }

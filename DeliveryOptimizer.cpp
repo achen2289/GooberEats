@@ -55,3 +55,4 @@ void DeliveryOptimizer::optimizeDeliveryOrder(
 {
     return m_impl->optimizeDeliveryOrder(depot, deliveries, oldCrowDistance, newCrowDistance);
 }
+

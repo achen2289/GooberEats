@@ -228,9 +228,9 @@ private:
 };
 
 // Tools for computing distance between GeoCoords, angle of a StreetSegment,
-// and angle between two StreetSegments 
+// and angle between two StreetSegments
 
-#include <cmath> 
+#include <cmath>
 
   // decimal degrees to radians
 inline double deg2rad(double deg) {

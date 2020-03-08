@@ -54,3 +54,4 @@ DeliveryResult DeliveryPlanner::generateDeliveryPlan(
 {
     return m_impl->generateDeliveryPlan(depot, deliveries, commands, totalDistanceTravelled);
 }
+
