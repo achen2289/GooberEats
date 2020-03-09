@@ -51,13 +51,13 @@ private:
     int m_associations; // each bucket will have a certain number of associations (num of Pairs in linked list)
     double m_maxLoad; // max load of hash map
     
-    unsigned int getHashResult(const KeyType& key) const; // return hash result, before performing modulus
+    unsigned int getHashResult(const KeyType& key, int buckets) const; // return hash result, before performing modulus
 };
 
 template<typename KeyType, typename ValueType>
 ExpandableHashMap<KeyType, ValueType>::ExpandableHashMap(double maximumLoadFactor)
 {
-    m_hashTable(8);
+    m_hashTable.resize(8);
     m_buckets = 8; // initialize size of hash table
     m_associations = 0; // number of key value pairs
     if (maximumLoadFactor <= 0) // initialize max load of hash table
@@ -100,8 +100,8 @@ void ExpandableHashMap<KeyType, ValueType>::associate(const KeyType& key, const 
         {
             for (auto itr = m_hashTable[i].begin(); itr != m_hashTable[i].end(); itr++)
             {
-                unsigned int h = getHashResult((*itr)->m_key);
-                m_newHashTable[h%(2*m_buckets)].push_back((*itr));
+                unsigned int h = getHashResult((*itr)->m_key, 2*m_buckets);
+                m_newHashTable[h].push_back((*itr));
             }
         }
         
@@ -122,7 +122,7 @@ void ExpandableHashMap<KeyType, ValueType>::associate(const KeyType& key, const 
     // if key is not found, add new Pair pointer to linked list in appropriate bucket
     if (result == nullptr)
     {
-        unsigned int h = getHashResult(key) % m_buckets;
+        unsigned int h = getHashResult(key, m_buckets);
         m_hashTable[h].push_back(new Pair{key, value});
         m_associations++;
         return;
@@ -133,7 +133,7 @@ void ExpandableHashMap<KeyType, ValueType>::associate(const KeyType& key, const 
 template<typename KeyType, typename ValueType>
 const ValueType* ExpandableHashMap<KeyType, ValueType>::find(const KeyType& key) const
 {
-    unsigned int h = getHashResult(key) % m_buckets;
+    unsigned int h = getHashResult(key, m_buckets);
     for (auto itr = m_hashTable[h].begin(); itr != m_hashTable[h].end(); itr++)
     {
         // if key is found, return address of m_value
@@ -158,11 +158,11 @@ void ExpandableHashMap<KeyType, ValueType>::clearMap()
 }
 
 template<typename KeyType, typename ValueType>
-unsigned int ExpandableHashMap<KeyType, ValueType>::getHashResult(const KeyType& key) const
+unsigned int ExpandableHashMap<KeyType, ValueType>::getHashResult(const KeyType& key, int buckets) const
 {
     unsigned int hasher(const KeyType& k); // prototype
     unsigned int h = hasher(key); // hash key and get bucket number
-    return h;
+    return h % buckets;
 }
 
 #endif /* EcpandableHashMap.h */

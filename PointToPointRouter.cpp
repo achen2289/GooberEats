@@ -25,7 +25,7 @@ PointToPointRouterImpl::PointToPointRouterImpl(const StreetMap* sm)
 
 PointToPointRouterImpl::~PointToPointRouterImpl()
 {
-   
+    delete sm;
 }
 
 DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
@@ -34,6 +34,7 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
         list<StreetSegment>& route,
         double& totalDistanceTravelled) const
 {
+    
     if (start == end)
     {
         totalDistanceTravelled = 0;
@@ -114,7 +115,6 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
         points.pop();
     }
     return NO_ROUTE;
-    
 }
 
 //******************** PointToPointRouter functions ***************************

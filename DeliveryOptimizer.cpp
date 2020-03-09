@@ -28,7 +28,15 @@ void DeliveryOptimizerImpl::optimizeDeliveryOrder(
     double& oldCrowDistance,
     double& newCrowDistance) const
 {
-    oldCrowDistance = 0;  // Delete these lines and implement this function correctly
+    oldCrowDistance = 0;
+    oldCrowDistance += distanceEarthMiles(depot, deliveries[0].location);
+    for (int i=1; i<deliveries.size(); i++)
+    {
+        oldCrowDistance += distanceEarthMiles(deliveries[i-1].location, deliveries[i].location);
+    }
+    
+    
+    
     newCrowDistance = 0;
 }
 

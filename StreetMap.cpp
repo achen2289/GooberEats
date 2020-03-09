@@ -24,17 +24,19 @@ private:
 
 StreetMapImpl::StreetMapImpl()
 {
+    m_hashMap = new ExpandableHashMap<GeoCoord, vector<StreetSegment>>();
 }
 
 StreetMapImpl::~StreetMapImpl()
 {
+    delete m_hashMap;
 //    m_hashMap->clearMap();
 }
 
 bool StreetMapImpl::load(string mapFile)
 {
     // read in map data
-    ifstream infile("mapdata.txt");
+    ifstream infile("/Users/alexchen/Desktop/cs 32/proj4/proj4/mapdata.txt");
     if (!infile)
         return false;
     string s;
@@ -54,26 +56,27 @@ bool StreetMapImpl::load(string mapFile)
             string line;
             getline(infile, line);
             int j=0;
-            GeoCoord gc1;
-            GeoCoord gc2;
+            GeoCoord gc1, gc2;
             
             // each line contains two GeoCoords
             for (int z=0; z<2; z++)
             {
                 string lat = "", lon = "";
-                while (j<line.length() && j != ' ')
+                while (j<line.length() && line[j] != ' ')
                 {
                     lat += line[j];
                     j++;
                 }
                 j++;
-                while (j<line.length() && j != ' ')
+                while (j<line.length() && line[j] != ' ')
                 {
                     lon += line[j];
                     j++;
                 }
                 j++;
+                
                 GeoCoord gc_temp(lat, lon);
+                
                 if (first)
                 {
                     // gc1 now contains lat and lon based on first two coords
@@ -81,8 +84,10 @@ bool StreetMapImpl::load(string mapFile)
                     first = false;
                 }
                 else
+                {
                     // gc2 now contains lat and lon based on last two coords
                     gc2 = gc_temp;
+                }
             }
             
             // form two street segments based on start and end GeoCoords and the reverses
