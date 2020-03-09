@@ -54,6 +54,8 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
     if (!sm->getSegmentsThatStartWith(end, segs))
         return BAD_COORD;
     
+    totalDistanceTravelled = 0;
+    
     // searching and queueing up SS for first GC
     if (sm->getSegmentsThatStartWith(curr, segs))
     {
@@ -68,12 +70,14 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
             if ((*itr).end == end)
             {
                 route.push_front((*itr)); // push current SS
+                totalDistanceTravelled += distanceEarthMiles((*itr).end, (*itr).start); // distance of last SS
                 StreetSegment* prev = previousSS.find((*itr).start); // find previous SS
                 
                 // repeat until starting GC of street segment is starting point
                 while (prev != nullptr)
                 {
                     route.push_front(*prev); // push prev SS to front
+                    totalDistanceTravelled += distanceEarthMiles((*prev).start, (*prev).end); //
                     prev = previousSS.find((*prev).start); // look for starting GC of prev SS
                 }
                 return DELIVERY_SUCCESS;
@@ -98,6 +102,7 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
             if ((*itr).end == end)
             {
                 route.push_front((*itr)); // push current SS
+                totalDistanceTravelled += distanceEarthMiles((*itr).end, (*itr).start); // distance of current SS
                 
                 // find previous SS
                 StreetSegment* prev = previousSS.find((*itr).start);
@@ -106,6 +111,7 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
                 while (prev != nullptr)
                 {
                     route.push_front(*prev); // push prev SS to front
+                    totalDistanceTravelled += distanceEarthMiles((*prev).end, (*prev).start); // distance of last SS
                     prev = previousSS.find((*prev).start); // look for starting GC of prev SS
                 }
                 return DELIVERY_SUCCESS;
