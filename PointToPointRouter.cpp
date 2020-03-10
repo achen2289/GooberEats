@@ -34,7 +34,6 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
         list<StreetSegment>& route,
         double& totalDistanceTravelled) const
 {
-    
     if (start == end)
     {
         totalDistanceTravelled = 0;
