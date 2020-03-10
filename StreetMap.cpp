@@ -11,7 +11,7 @@ unsigned int hasher(const GeoCoord& g)
     return hash<string>()(g.latitudeText + g.longitudeText);
 }
 
-unsigned int hasher(const string str)
+unsigned int hasher(const string& str)
 {
     return hash<string>()(str);
 }

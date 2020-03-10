@@ -21,6 +21,10 @@ public:
     ~ExpandableHashMap();
     void reset();
     int size() const;
+    int buckets() const
+    {
+        return m_buckets;
+    }
     void associate(const KeyType& key, const ValueType& value);
 
       // for a map that can't be modified, return a pointer to const ValueType
@@ -90,33 +94,24 @@ int ExpandableHashMap<KeyType, ValueType>::size() const
 template<typename KeyType, typename ValueType>
 void ExpandableHashMap<KeyType, ValueType>::associate(const KeyType& key, const ValueType& value)
 {
-    if (((m_associations+1) / m_buckets) > m_maxLoad)
+    if (((double)(m_associations+1) / m_buckets) > m_maxLoad)
     {
-        std::vector<std::list<Pair*>> m_newHashTable; // new hash table
-        m_newHashTable.resize(2*m_buckets);
+        std::vector<std::list<Pair*>> m_tempHashTable(2*m_buckets);
+        std::swap(m_tempHashTable, m_hashTable); // swap hash table with empty hash table of size 2*m_buckets
+        m_buckets *= 2;
         
-        // rehash all linked lists inside existing buckets and add to new container
-        for (int i=0; i<m_buckets; i++)
+        // copy all Pair pointers from temp hash table into appropriate bucket in original hash table
+        for (int i=0; i<m_tempHashTable.size(); i++)
         {
-            for (auto itr = m_hashTable[i].begin(); itr != m_hashTable[i].end(); itr++)
+            for (auto itr = m_tempHashTable[i].begin(); itr != m_tempHashTable[i].end(); itr++)
             {
-                unsigned int h = getHashResult((*itr)->m_key, 2*m_buckets);
-                m_newHashTable[h].push_back((*itr));
+                unsigned int h = getHashResult((*itr)->m_key, m_buckets);
+                m_hashTable[h].push_back(*itr);
+                *itr = nullptr;
             }
         }
-        
-        m_buckets *= 2; // double number of buckets
-        m_hashTable.resize(m_buckets); // resize original hash map
-        
-        m_hashTable = m_newHashTable; // shallow copy all lists and Pair pointers back into original hash map
-        
-        // loop through temp hash map and assign Pair pointers to nullptr
-        for (auto itr = m_newHashTable.begin(); itr != m_newHashTable.end(); itr++)
-        {
-            for (auto itr2 = (*itr).begin(); itr2 != (*itr).end(); itr2++)
-                (*itr2) = nullptr;
-        }
     }
+        
     ValueType* result = find(key);
     
     // if key is not found, add new Pair pointer to linked list in appropriate bucket
