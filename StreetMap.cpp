@@ -11,10 +11,10 @@ unsigned int hasher(const GeoCoord& g)
     return hash<string>()(g.latitudeText + g.longitudeText);
 }
 
-unsigned int hasher(const string& str)
-{
-    return hash<string>()(str);
-}
+//unsigned int hasher(const string& str)
+//{
+//    return hash<string>()(str);
+//}
 
 class StreetMapImpl
 {
@@ -29,6 +29,7 @@ private:
 
 StreetMapImpl::StreetMapImpl()
 {
+    cout << "streetmapimpl" << endl;
     m_hashMap = new ExpandableHashMap<GeoCoord, vector<StreetSegment>>();
 }
 
@@ -103,7 +104,9 @@ bool StreetMapImpl::load(string mapFile)
             
             // if result1 is nullptr, then key is not found
             if (result1 == nullptr)
+            {
                 m_hashMap->associate(gc1, vector<StreetSegment> {ss1}); // insert vector with that street segment
+            }
             else
                 result1->push_back(ss1); // take vector value and insert street segment
             if (result2 == nullptr)
@@ -131,6 +134,7 @@ bool StreetMapImpl::getSegmentsThatStartWith(const GeoCoord& gc, vector<StreetSe
 
 StreetMap::StreetMap()
 {
+    cout << "streetmap" << endl;
     m_impl = new StreetMapImpl;
 }
 

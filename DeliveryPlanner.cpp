@@ -39,22 +39,23 @@ DeliveryResult DeliveryPlannerImpl::generateDeliveryPlan(
     double& totalDistanceTravelled) const
 {
     totalDistanceTravelled = 0;
+    
+    // clear commands
+    for (auto itr = commands.begin(); itr != commands.end(); itr++)
+        itr = commands.erase(itr);
     double tempDist;
     double oldCrowDistance, newCrowDistance;
     vector<DeliveryRequest> reorderedDel = deliveries;
-    list<StreetSegment> route;
     dop->optimizeDeliveryOrder(depot, reorderedDel, oldCrowDistance, newCrowDistance);
     
     // DON'T FORGET TO DEAL WITH IF PTPROUTE RETURNS BAD_COORD
     // DEAL WITH THIS IN DELIVERY OPTIMIZER?
     
-    DeliveryResult dr = ptp->generatePointToPointRoute(depot, reorderedDel[0].location, route, tempDist);
+    list<StreetSegment> route;
+    DeliveryResult dr = ptp->generatePointToPointRoute(depot, reorderedDel[0].location, route, tempDist); // clears route before pushing back
     if (dr != DELIVERY_SUCCESS)
         return dr;
-    vector<DeliveryCommand> empty;
-    commands = empty;
     routeToCommand(route, commands);
-    
     totalDistanceTravelled += tempDist; // distance traveled to first delivery
     GeoCoord prev = reorderedDel[0].location; // store previous location GeoCoord
     

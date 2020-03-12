@@ -15,17 +15,17 @@ public:
         list<StreetSegment>& route,
         double& totalDistanceTravelled) const;
 private:
-    StreetMap* sm;
+    const StreetMap* m_sm;
 };
 
 PointToPointRouterImpl::PointToPointRouterImpl(const StreetMap* sm)
 {
-    sm = sm;
+    m_sm = sm;
 }
 
 PointToPointRouterImpl::~PointToPointRouterImpl()
 {
-    delete sm;
+    delete m_sm;
 }
 
 DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
@@ -34,13 +34,11 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
         list<StreetSegment>& route,
         double& totalDistanceTravelled) const
 {
+    totalDistanceTravelled = 0;
+    for (auto itr = route.begin(); itr != route.end(); )
+        itr = route.erase(itr);
     if (start == end)
-    {
-        totalDistanceTravelled = 0;
-        for (auto itr = route.begin(); itr != route.end(); )
-            itr = route.erase(itr);
         return DELIVERY_SUCCESS;
-    }
     
     GeoCoord curr = start;
     ExpandableHashMap<GeoCoord, StreetSegment> previousSS;
@@ -50,13 +48,14 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
     // get all street segments that start with starting GeoCoord
     
     // end coord not found
-    if (!sm->getSegmentsThatStartWith(end, segs))
+    GeoCoord end2 = end;
+    if (!m_sm->getSegmentsThatStartWith(end2, segs))
         return BAD_COORD;
     
     totalDistanceTravelled = 0;
     
     // searching and queueing up SS for first GC
-    if (sm->getSegmentsThatStartWith(curr, segs))
+    if (m_sm->getSegmentsThatStartWith(curr, segs))
     {
         // associate all end GeoCoords with the starting GeoCoord
         // queue up all end GeoCoords to be processed
@@ -76,7 +75,7 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
                 while (prev != nullptr)
                 {
                     route.push_front(*prev); // push prev SS to front
-                    totalDistanceTravelled += distanceEarthMiles((*prev).start, (*prev).end); //
+                    totalDistanceTravelled += distanceEarthMiles((*prev).start, (*prev).end); // length of previous SS
                     prev = previousSS.find((*prev).start); // look for starting GC of prev SS
                 }
                 return DELIVERY_SUCCESS;
@@ -90,34 +89,37 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
     
     while (!points.empty())
     {
-        // associate all end GeoCoords with the starting GeoCoord
-        // queue up all end GeoCoords to be processed
-        for (auto itr = segs.begin(); itr != segs.end(); itr++)
+        if (m_sm->getSegmentsThatStartWith(curr, segs))
         {
-            previousSS.associate((*itr).end, *itr); // key: ending GC. value: SS to get to ending GC
-            points.push((*itr).end); // queue up end SS
-            
-            // if ending GC of a street segment is the end point
-            if ((*itr).end == end)
+            // associate all end GeoCoords with the starting GeoCoord
+            // queue up all end GeoCoords to be processed
+            for (auto itr = segs.begin(); itr != segs.end(); itr++)
             {
-                route.push_front((*itr)); // push current SS
-                totalDistanceTravelled += distanceEarthMiles((*itr).end, (*itr).start); // distance of current SS
+                previousSS.associate((*itr).end, *itr); // key: ending GC. value: SS to get to ending GC
+                points.push((*itr).end); // queue up end SS
                 
-                // find previous SS
-                StreetSegment* prev = previousSS.find((*itr).start);
-                
-                // repeat until starting GC of street segment is starting point
-                while (prev != nullptr)
+                // if ending GC of a street segment is the end point
+                if ((*itr).end == end)
                 {
-                    route.push_front(*prev); // push prev SS to front
-                    totalDistanceTravelled += distanceEarthMiles((*prev).end, (*prev).start); // distance of last SS
-                    prev = previousSS.find((*prev).start); // look for starting GC of prev SS
+                    route.push_front((*itr)); // push current SS
+                    totalDistanceTravelled += distanceEarthMiles((*itr).end, (*itr).start); // distance of current SS
+                    
+                    // find previous SS
+                    StreetSegment* prev = previousSS.find((*itr).start);
+                    
+                    // repeat until starting GC of street segment is starting point
+                    while (prev != nullptr)
+                    {
+                        route.push_front(*prev); // push prev SS to front
+                        totalDistanceTravelled += distanceEarthMiles((*prev).end, (*prev).start); // distance of last SS
+                        prev = previousSS.find((*prev).start); // look for starting GC of prev SS
+                    }
+                    return DELIVERY_SUCCESS;
                 }
-                return DELIVERY_SUCCESS;
             }
+            curr = points.front();
+            points.pop();
         }
-        curr = points.front();
-        points.pop();
     }
     return NO_ROUTE;
 }

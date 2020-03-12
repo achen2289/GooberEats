@@ -13,17 +13,17 @@ public:
         double& oldCrowDistance,
         double& newCrowDistance) const;
 private:
-    StreetMap* sm;
+    const StreetMap* m_sm;
 };
 
 DeliveryOptimizerImpl::DeliveryOptimizerImpl(const StreetMap* sm)
 {
-    sm = sm;
+    m_sm = sm;
 }
 
 DeliveryOptimizerImpl::~DeliveryOptimizerImpl()
 {
-    delete sm;
+    delete m_sm;
 }
 
 void DeliveryOptimizerImpl::optimizeDeliveryOrder(
@@ -39,9 +39,19 @@ void DeliveryOptimizerImpl::optimizeDeliveryOrder(
         oldCrowDistance += distanceEarthMiles(deliveries[i-1].location, deliveries[i].location);
     }
     
+//    vector<DeliveryRequest> reOrdered;
+//    for (int i=0; i<deliveries.size(); i++)
+//    {
+//        reOrdered[i] = deliveries[0];
+//        double tempDist = 0;
+//        for (int j=i+1; i<deliveries.size(); j++)
+//        {
+//
+//        }
+//    }
     
     
-    newCrowDistance = 0;
+    newCrowDistance = oldCrowDistance;
 }
 
 //******************** DeliveryOptimizer functions ****************************

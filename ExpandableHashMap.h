@@ -21,10 +21,20 @@ public:
     ~ExpandableHashMap();
     void reset();
     int size() const;
-    int buckets() const
-    {
-        return m_buckets;
-    }
+//    void print()
+//    {
+//        for (int i=0; i<m_buckets; i++)
+//        {
+//            for (auto itr = m_hashTable[i].begin(); itr != m_hashTable[i].end(); itr++)
+//            {
+//                std::cout << (*itr)->m_key.latitude << std::endl;
+//            }
+//        }
+//    }
+//    int buckets() const
+//    {
+//        return m_buckets;
+//    }
     void associate(const KeyType& key, const ValueType& value);
 
       // for a map that can't be modified, return a pointer to const ValueType
@@ -132,7 +142,7 @@ const ValueType* ExpandableHashMap<KeyType, ValueType>::find(const KeyType& key)
     for (auto itr = m_hashTable[h].begin(); itr != m_hashTable[h].end(); itr++)
     {
         // if key is found, return address of m_value
-        if ((*itr)->m_key == key)
+        if ((*itr) != nullptr && (*itr)->m_key == key)
             return &(*itr)->m_value;
     }
     return nullptr; // return nullptr if key not found
