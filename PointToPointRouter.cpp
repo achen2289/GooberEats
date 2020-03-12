@@ -16,6 +16,27 @@ public:
         double& totalDistanceTravelled) const;
 private:
     const StreetMap* m_sm;
+    struct gcPair
+    {
+        gcPair(GeoCoord current, GeoCoord previous, GeoCoord finalDest)
+        : curr(current), prev(previous), final(finalDest)
+        {}
+        GeoCoord curr;
+        GeoCoord prev;
+        GeoCoord final;
+        
+        bool operator>(const gcPair& other) const
+        {
+            // g value is distance from previous gc to current gc
+            // h value is distance from current gc to final destination
+            double g_this = distanceEarthMiles(this->prev, this->curr);
+            double h_this = distanceEarthMiles(this->curr, this->final);
+            double g_other = distanceEarthMiles(other.prev, other.curr);
+            double h_other = distanceEarthMiles(other.curr, other.final);
+    //        cout << this->curr.latitude << " " << g_this + h_this << endl << other.curr.latitude << " " << g_other + h_other << endl;
+            return (g_this + h_this) > (g_other + h_other);
+        }
+    };
 };
 
 PointToPointRouterImpl::PointToPointRouterImpl(const StreetMap* sm)
@@ -35,93 +56,51 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
         double& totalDistanceTravelled) const
 {
     totalDistanceTravelled = 0;
-    for (auto itr = route.begin(); itr != route.end(); )
+    for (auto itr = route.begin(); itr != route.end(); ) // clear route
         itr = route.erase(itr);
     if (start == end)
         return DELIVERY_SUCCESS;
     
-    GeoCoord curr = start;
-    ExpandableHashMap<GeoCoord, StreetSegment> previousSS;
-    queue<GeoCoord> points;
-    vector<StreetSegment> segs;
+    priority_queue<gcPair, vector<gcPair>, greater<gcPair>> pq; // priority queue to hold gcPairs
+    ExpandableHashMap<GeoCoord, StreetSegment> previousSS; // maps ending GC to SS that led there
+    vector<StreetSegment> segs; // holds street segments that begin with certain gc
     
-    // get all street segments that start with starting GeoCoord
-    
-    // end coord not found
-    GeoCoord end2 = end;
-    if (!m_sm->getSegmentsThatStartWith(end2, segs))
+    // end geocoord not found
+    if (!m_sm->getSegmentsThatStartWith(end, segs))
         return BAD_COORD;
     
-    totalDistanceTravelled = 0;
-    
-    // searching and queueing up SS for first GC
-    if (m_sm->getSegmentsThatStartWith(curr, segs))
-    {
-        // associate all end GeoCoords with the starting GeoCoord
-        // queue up all end GeoCoords to be processed
-        for (auto itr = segs.begin(); itr != segs.end(); itr++)
-        {
-            previousSS.associate((*itr).end, *itr); // key: ending GC. value: SS to get to ending GC
-            points.push((*itr).end); // queue up end SS
-            
-            // if ending GC of a street segment is the end point
-            if ((*itr).end == end)
-            {
-                route.push_front((*itr)); // push current SS
-                totalDistanceTravelled += distanceEarthMiles((*itr).end, (*itr).start); // distance of last SS
-                StreetSegment* prev = previousSS.find((*itr).start); // find previous SS
-                
-                // repeat until starting GC of street segment is starting point
-                while (prev != nullptr)
-                {
-                    route.push_front(*prev); // push prev SS to front
-                    totalDistanceTravelled += distanceEarthMiles((*prev).start, (*prev).end); // length of previous SS
-                    prev = previousSS.find((*prev).start); // look for starting GC of prev SS
-                }
-                return DELIVERY_SUCCESS;
-            }
-        }
-        curr = points.front();
-        points.pop();
-    }
-    else // if first GC not found
+    // starting geocoord not found
+    if (!m_sm->getSegmentsThatStartWith(start, segs))
         return BAD_COORD;
     
-    while (!points.empty())
+    pq.push(gcPair(start, start, end)); // push first GC
+    
+    while (!pq.empty())
     {
-        if (m_sm->getSegmentsThatStartWith(curr, segs))
+        gcPair gcP = pq.top();
+        pq.pop();
+        if (m_sm->getSegmentsThatStartWith(gcP.curr, segs))
         {
-            // associate all end GeoCoords with the starting GeoCoord
-            // queue up all end GeoCoords to be processed
+            // segs contains all street segments starting with gcP.curr
             for (auto itr = segs.begin(); itr != segs.end(); itr++)
             {
-                previousSS.associate((*itr).end, *itr); // key: ending GC. value: SS to get to ending GC
-                points.push((*itr).end); // queue up end SS
-                
-                // if ending GC of a street segment is the end point
+                previousSS.associate((*itr).end, *itr); // associate ending GC with SS that led there
+                pq.push(gcPair((*itr).end, gcP.curr, end)); // push gcPair containing next GC, prev GC, and ending location
                 if ((*itr).end == end)
                 {
-                    route.push_front((*itr)); // push current SS
-                    totalDistanceTravelled += distanceEarthMiles((*itr).end, (*itr).start); // distance of current SS
-                    
-                    // find previous SS
-                    StreetSegment* prev = previousSS.find((*itr).start);
-                    
-                    // repeat until starting GC of street segment is starting point
+                    StreetSegment* prev = previousSS.find((*itr).end); // find SS leading to end GC
                     while (prev != nullptr)
                     {
-                        route.push_front(*prev); // push prev SS to front
-                        totalDistanceTravelled += distanceEarthMiles((*prev).end, (*prev).start); // distance of last SS
-                        prev = previousSS.find((*prev).start); // look for starting GC of prev SS
+                        route.push_front(*prev);
+                        totalDistanceTravelled += distanceEarthMiles(prev->end, prev->start);
+                        prev = previousSS.find(prev->start);
                     }
                     return DELIVERY_SUCCESS;
                 }
             }
-            curr = points.front();
-            points.pop();
         }
     }
-    return NO_ROUTE;
+    return BAD_COORD; // start geocoord does not lead to anywhere
 }
 
 //******************** PointToPointRouter functions ***************************

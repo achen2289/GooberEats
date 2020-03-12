@@ -49,8 +49,7 @@ void DeliveryOptimizerImpl::optimizeDeliveryOrder(
 //
 //        }
 //    }
-    
-    
+
     newCrowDistance = oldCrowDistance;
 }
 

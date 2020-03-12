@@ -39,13 +39,12 @@ DeliveryResult DeliveryPlannerImpl::generateDeliveryPlan(
     double& totalDistanceTravelled) const
 {
     totalDistanceTravelled = 0;
-    
-    // clear commands
-    for (auto itr = commands.begin(); itr != commands.end(); itr++)
+    for (auto itr = commands.begin(); itr != commands.end(); itr++) // clear commands
         itr = commands.erase(itr);
+    
     double tempDist;
     double oldCrowDistance, newCrowDistance;
-    vector<DeliveryRequest> reorderedDel = deliveries;
+    vector<DeliveryRequest> reorderedDel = deliveries; // modifiable delivery request vector
     dop->optimizeDeliveryOrder(depot, reorderedDel, oldCrowDistance, newCrowDistance);
     
     // DON'T FORGET TO DEAL WITH IF PTPROUTE RETURNS BAD_COORD
@@ -55,7 +54,7 @@ DeliveryResult DeliveryPlannerImpl::generateDeliveryPlan(
     DeliveryResult dr = ptp->generatePointToPointRoute(depot, reorderedDel[0].location, route, tempDist); // clears route before pushing back
     if (dr != DELIVERY_SUCCESS)
         return dr;
-    routeToCommand(route, commands);
+    routeToCommand(route, commands); // commands to get to first location
     totalDistanceTravelled += tempDist; // distance traveled to first delivery
     GeoCoord prev = reorderedDel[0].location; // store previous location GeoCoord
     
@@ -77,6 +76,8 @@ DeliveryResult DeliveryPlannerImpl::generateDeliveryPlan(
         dCom.initAsDeliverCommand(reorderedDel[i].item);
         commands.push_back(dCom);
     }
+    
+    // route from last location back to depot
     dr = ptp->generatePointToPointRoute(reorderedDel[reorderedDel.size()-1].location, depot, route, tempDist);
     if (dr != DELIVERY_SUCCESS)
         return dr;
@@ -123,7 +124,7 @@ bool DeliveryPlannerImpl::routeToCommand(list<StreetSegment>& route, vector<Deli
             {
                 double angle = angleOfLine(*itr);
                 double dist = distanceEarthMiles((*itr).start, (*itr).end);
-                comm.initAsProceedCommand(directionString(angle), ((*itr).name), dist);
+                comm.initAsProceedCommand(directionString(angle), (*itr).name, dist);
                 previous = (*itr).name;
                 itr++;
             }
@@ -135,8 +136,7 @@ bool DeliveryPlannerImpl::routeToCommand(list<StreetSegment>& route, vector<Deli
                 
                 double angle = angleOfLine(*itr);
                 double dist = distanceEarthMiles((*itr).start, (*itr).end);
-                comm.initAsProceedCommand(directionString(angle), ((*itr).name), dist);
-                
+                comm.initAsProceedCommand(directionString(angle), (*itr).name, dist);
                 previous = (*itr).name;
                 itr++;
             }
@@ -149,7 +149,6 @@ bool DeliveryPlannerImpl::routeToCommand(list<StreetSegment>& route, vector<Deli
                 double angle = angleOfLine(*itr);
                 double dist = distanceEarthMiles((*itr).start, (*itr).end);
                 comm.initAsProceedCommand(directionString(angle), ((*itr).name), dist);
-                
                 previous = (*itr).name;
                 itr++;
             }
