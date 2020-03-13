@@ -38,12 +38,12 @@ DeliveryResult DeliveryPlannerImpl::generateDeliveryPlan(
     vector<DeliveryCommand>& commands,
     double& totalDistanceTravelled) const
 {
-    if (deliveries.empty()) // ensures deliveries size is at least one
-        return DELIVERY_SUCCESS;
-    
     totalDistanceTravelled = 0;
     for (auto itr = commands.begin(); itr != commands.end(); itr++) // clear commands
         itr = commands.erase(itr);
+    
+    if (deliveries.empty()) // ensures deliveries size is at least one
+        return DELIVERY_SUCCESS;
     
     double tempDist;
     double oldCrowDistance, newCrowDistance;

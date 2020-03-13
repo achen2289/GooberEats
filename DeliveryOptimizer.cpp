@@ -18,7 +18,6 @@ private:
 
 DeliveryOptimizerImpl::DeliveryOptimizerImpl(const StreetMap* sm)
 {
-    m_sm = sm;
 }
 
 DeliveryOptimizerImpl::~DeliveryOptimizerImpl()
@@ -34,6 +33,9 @@ void DeliveryOptimizerImpl::optimizeDeliveryOrder(
     oldCrowDistance = 0;
     newCrowDistance = 0;
     
+    if (deliveries.empty())
+        return;
+    
     // compute oldCrowDistance
     oldCrowDistance += distanceEarthMiles(depot, deliveries[0].location);
     for (int i=1; i<deliveries.size(); i++)
@@ -44,6 +46,7 @@ void DeliveryOptimizerImpl::optimizeDeliveryOrder(
     vector<DeliveryRequest> tempDeliveries; // empty
     swap(tempDeliveries, deliveries); // deliveries now empty, temp contains deliveries elements
     
+    // reorders deliveries using a Greedy algorithm
     GeoCoord starting = depot;
     while (!tempDeliveries.empty())
     {

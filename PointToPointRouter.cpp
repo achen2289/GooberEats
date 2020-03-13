@@ -17,6 +17,8 @@ public:
         double& totalDistanceTravelled) const;
 private:
     const StreetMap* m_sm;
+    
+    // gcPair used to place GeoCoords into priority queue based on an empirical and heuristic value
     struct gcPair
     {
         gcPair(GeoCoord current, GeoCoord previous, GeoCoord finalDest)
@@ -26,6 +28,7 @@ private:
         GeoCoord prev;
         GeoCoord final;
         
+        // operator > overload to allow priority queue to sort in increasing order
         bool operator>(const gcPair& other) const
         {
             // g value is distance from previous gc to current gc
@@ -34,13 +37,6 @@ private:
             double h_this = distanceEarthMiles(this->curr, this->final);
             double g_other = distanceEarthMiles(other.prev, other.curr);
             double h_other = distanceEarthMiles(other.curr, other.final);
-            
-//            double g_this = pow(pow((this->prev.latitude - this->curr.latitude), 2) + pow((this->prev.longitude - this->curr.longitude), 2), 0.5);
-//            double h_this = pow(pow((this->final.latitude - this->curr.latitude), 2) + pow((this->final.longitude - this->curr.longitude), 2), 0.5);
-//            double g_other = pow(pow((other.prev.latitude - other.curr.latitude), 2) + pow((other.prev.longitude - other.curr.longitude), 2), 0.5);
-//            double h_other = pow(pow((other.final.latitude - other.curr.latitude), 2) + pow((other.final.longitude - other.curr.longitude), 2), 0.5);
-            
-    //        cout << this->curr.latitude << " " << g_this + h_this << endl << other.curr.latitude << " " << g_other + h_other << endl;
             return (g_this + h_this) > (g_other + h_other);
         }
     };
