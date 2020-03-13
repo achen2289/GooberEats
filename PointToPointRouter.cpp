@@ -2,6 +2,7 @@
 #include "ExpandableHashMap.h"
 #include <queue>
 #include <list>
+#include <cmath>
 using namespace std;
 
 class PointToPointRouterImpl
@@ -33,6 +34,12 @@ private:
             double h_this = distanceEarthMiles(this->curr, this->final);
             double g_other = distanceEarthMiles(other.prev, other.curr);
             double h_other = distanceEarthMiles(other.curr, other.final);
+            
+//            double g_this = pow(pow((this->prev.latitude - this->curr.latitude), 2) + pow((this->prev.longitude - this->curr.longitude), 2), 0.5);
+//            double h_this = pow(pow((this->final.latitude - this->curr.latitude), 2) + pow((this->final.longitude - this->curr.longitude), 2), 0.5);
+//            double g_other = pow(pow((other.prev.latitude - other.curr.latitude), 2) + pow((other.prev.longitude - other.curr.longitude), 2), 0.5);
+//            double h_other = pow(pow((other.final.latitude - other.curr.latitude), 2) + pow((other.final.longitude - other.curr.longitude), 2), 0.5);
+            
     //        cout << this->curr.latitude << " " << g_this + h_this << endl << other.curr.latitude << " " << g_other + h_other << endl;
             return (g_this + h_this) > (g_other + h_other);
         }
@@ -46,7 +53,6 @@ PointToPointRouterImpl::PointToPointRouterImpl(const StreetMap* sm)
 
 PointToPointRouterImpl::~PointToPointRouterImpl()
 {
-    delete m_sm;
 }
 
 DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
@@ -74,7 +80,6 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
         return BAD_COORD;
     
     pq.push(gcPair(start, start, end)); // push first GC
-    
     while (!pq.empty())
     {
         gcPair gcP = pq.top();
@@ -84,18 +89,21 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
             // segs contains all street segments starting with gcP.curr
             for (auto itr = segs.begin(); itr != segs.end(); itr++)
             {
-                previousSS.associate((*itr).end, *itr); // associate ending GC with SS that led there
-                pq.push(gcPair((*itr).end, gcP.curr, end)); // push gcPair containing next GC, prev GC, and ending location
-                if ((*itr).end == end)
+                if (previousSS.find((*itr).end) == nullptr) // if end GC has not been traveled to yet
                 {
-                    StreetSegment* prev = previousSS.find((*itr).end); // find SS leading to end GC
-                    while (prev != nullptr)
+                    previousSS.associate((*itr).end, *itr); // associate ending GC with SS that led there
+                    pq.push(gcPair((*itr).end, gcP.curr, end)); // push gcPair containing next GC, prev GC, and ending location
+                    if ((*itr).end == end)
                     {
-                        route.push_front(*prev);
-                        totalDistanceTravelled += distanceEarthMiles(prev->end, prev->start);
-                        prev = previousSS.find(prev->start);
+                        StreetSegment* prev = previousSS.find((*itr).end); // find SS leading to end GC
+                        while (prev->start != start)
+                        {
+                            route.push_front(*prev);
+                            totalDistanceTravelled += distanceEarthMiles(prev->end, prev->start);
+                            prev = previousSS.find(prev->start);
+                        }
+                        return DELIVERY_SUCCESS;
                     }
-                    return DELIVERY_SUCCESS;
                 }
             }
         }

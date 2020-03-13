@@ -23,7 +23,6 @@ DeliveryOptimizerImpl::DeliveryOptimizerImpl(const StreetMap* sm)
 
 DeliveryOptimizerImpl::~DeliveryOptimizerImpl()
 {
-    delete m_sm;
 }
 
 void DeliveryOptimizerImpl::optimizeDeliveryOrder(
@@ -33,24 +32,40 @@ void DeliveryOptimizerImpl::optimizeDeliveryOrder(
     double& newCrowDistance) const
 {
     oldCrowDistance = 0;
+    newCrowDistance = 0;
+    
+    // compute oldCrowDistance
     oldCrowDistance += distanceEarthMiles(depot, deliveries[0].location);
     for (int i=1; i<deliveries.size(); i++)
     {
         oldCrowDistance += distanceEarthMiles(deliveries[i-1].location, deliveries[i].location);
     }
     
-//    vector<DeliveryRequest> reOrdered;
-//    for (int i=0; i<deliveries.size(); i++)
-//    {
-//        reOrdered[i] = deliveries[0];
-//        double tempDist = 0;
-//        for (int j=i+1; i<deliveries.size(); j++)
-//        {
-//
-//        }
-//    }
-
-    newCrowDistance = oldCrowDistance;
+    vector<DeliveryRequest> tempDeliveries; // empty
+    swap(tempDeliveries, deliveries); // deliveries now empty, temp contains deliveries elements
+    
+    GeoCoord starting = depot;
+    while (!tempDeliveries.empty())
+    {
+        auto itrTemp = tempDeliveries.begin(); // current delivery request iterator
+        double distBetw = distanceEarthMiles(starting, (*itrTemp).location); // dist from starting location to first location
+        for (auto itr = tempDeliveries.begin(); itr != tempDeliveries.end(); itr++)
+        {
+            double dist = distanceEarthMiles(starting, (*itr).location);
+            if (dist < distBetw) // if distance from starting location to any location is less, then set itrTemp to that location
+                itrTemp = itr;
+        }
+        deliveries.push_back(*itrTemp); // add closest delivery request to deliveries
+        starting = (*itrTemp).location; // set starting to GeoCoord of most recently added location
+        tempDeliveries.erase(itrTemp); // delete that request from tempDeliveries
+    }
+    
+    // compute newCrowDistance
+    newCrowDistance += distanceEarthMiles(depot, deliveries[0].location);
+    for (int i=1; i<deliveries.size(); i++)
+    {
+        newCrowDistance += distanceEarthMiles(deliveries[i-1].location, deliveries[i].location);
+    }
 }
 
 //******************** DeliveryOptimizer functions ****************************

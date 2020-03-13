@@ -21,32 +21,18 @@ public:
     ~ExpandableHashMap();
     void reset();
     int size() const;
-//    void print()
-//    {
-//        for (int i=0; i<m_buckets; i++)
-//        {
-//            for (auto itr = m_hashTable[i].begin(); itr != m_hashTable[i].end(); itr++)
-//            {
-//                std::cout << (*itr)->m_key.latitude << std::endl;
-//            }
-//        }
-//    }
-//    int buckets() const
-//    {
-//        return m_buckets;
-//    }
     void associate(const KeyType& key, const ValueType& value);
 
-      // for a map that can't be modified, return a pointer to const ValueType
+    // for a map that can't be modified, return a pointer to const ValueType
     const ValueType* find(const KeyType& key) const;
 
-      // for a modifiable map, return a pointer to modifiable ValueType
+    // for a modifiable map, return a pointer to modifiable ValueType
     ValueType* find(const KeyType& key)
     {
         return const_cast<ValueType*>(const_cast<const ExpandableHashMap*>(this)->find(key));
     }
 
-      // C++11 syntax for preventing copying and assignment
+    // C++11 syntax for preventing copying and assignment
     ExpandableHashMap(const ExpandableHashMap&) = delete;
     ExpandableHashMap& operator=(const ExpandableHashMap&) = delete;
 
@@ -64,7 +50,6 @@ private:
     int m_buckets; // number of buckets
     int m_associations; // each bucket will have a certain number of associations (num of Pairs in linked list)
     double m_maxLoad; // max load of hash map
-    
     unsigned int getHashResult(const KeyType& key, int buckets) const; // return hash result, before performing modulus
 };
 

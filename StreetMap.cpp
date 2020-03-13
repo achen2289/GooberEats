@@ -29,20 +29,18 @@ private:
 
 StreetMapImpl::StreetMapImpl()
 {
-    cout << "streetmapimpl" << endl;
     m_hashMap = new ExpandableHashMap<GeoCoord, vector<StreetSegment>>();
 }
 
 StreetMapImpl::~StreetMapImpl()
 {
     delete m_hashMap;
-//    m_hashMap->clearMap();
 }
 
 bool StreetMapImpl::load(string mapFile)
 {
     // read in map data
-    ifstream infile("/Users/alexchen/Desktop/cs 32/proj4/proj4/mapdata.txt");
+    ifstream infile(mapFile);
     if (!infile)
         return false;
     string s;
@@ -134,7 +132,6 @@ bool StreetMapImpl::getSegmentsThatStartWith(const GeoCoord& gc, vector<StreetSe
 
 StreetMap::StreetMap()
 {
-    cout << "streetmap" << endl;
     m_impl = new StreetMapImpl;
 }
 
