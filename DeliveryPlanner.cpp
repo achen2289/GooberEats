@@ -50,8 +50,6 @@ DeliveryResult DeliveryPlannerImpl::generateDeliveryPlan(
     vector<DeliveryRequest> reorderedDel = deliveries; // modifiable delivery request vector
     dop->optimizeDeliveryOrder(depot, reorderedDel, oldCrowDistance, newCrowDistance);
     
-    // DON'T FORGET TO DEAL WITH IF PTPROUTE RETURNS BAD_COORD
-    // DEAL WITH THIS IN DELIVERY OPTIMIZER?
     list<StreetSegment> route;
     DeliveryResult dr = ptp->generatePointToPointRoute(depot, reorderedDel[0].location, route, tempDist); // clears route before pushing back
     if (dr != DELIVERY_SUCCESS)
@@ -97,37 +95,21 @@ DeliveryResult DeliveryPlannerImpl::generateDeliveryPlan(
 
 bool DeliveryPlannerImpl::routeToCommand(list<StreetSegment>& route, vector<DeliveryCommand>& commands) const
 {
-    string previous = "";
+    string previous = ""; // stores previous streets name, starts out as empty string
     auto itr = route.begin();
     while (itr != route.end())
     {
-        // first street segment must create new proceed command
-        if (itr == route.begin())
-        {
-            DeliveryCommand com;
-            double angle = angleOfLine(*itr);
-            double dist = distanceEarthMiles((*itr).start, (*itr).end);
-            com.initAsProceedCommand(directionString(angle), (*itr).name, dist);
-            previous = (*itr).name; // name of first SS
-            itr++;
-            
-            while (itr != route.end() && (*itr).name == previous)
-            {
-                double dist = distanceEarthMiles((*itr).start, (*itr).end);
-                com.increaseDistance(dist);
-                previous = (*itr).name; // name of SS
-                itr++;
-            }
-            commands.push_back(com);
-        }
-        
-        // commands following first SS command
+        // creates possibly a turn command, definitely creates a proceed command, and then increments distance until new street is reached
+        // loops for every new street
         if (itr != route.end() && (*itr).name != previous)
         {
             DeliveryCommand comm;
             auto itr2 = itr;
-            itr2--; // iterator to previous SS
-            double angleBet = angleBetween2Lines(*itr2, *itr);
+            if (itr != route.begin())
+                itr2--; // iterator to previous SS, if not first SS
+            double angleBet = angleBetween2Lines(*itr2, *itr); // angle between old and new street, 0 if first street segment
+            
+            // creates proceed command for the new street if no turn required
             if (angleBet < 1 || angleBet > 359)
             {
                 double angle = angleOfLine(*itr);
@@ -136,6 +118,8 @@ bool DeliveryPlannerImpl::routeToCommand(list<StreetSegment>& route, vector<Deli
                 previous = (*itr).name;
                 itr++;
             }
+            
+            // creates left turn command and then new street proceed command for the new street
             else if (angleBet >= 1 && angleBet < 180)
             {
                 DeliveryCommand commT;
@@ -148,6 +132,8 @@ bool DeliveryPlannerImpl::routeToCommand(list<StreetSegment>& route, vector<Deli
                 previous = (*itr).name;
                 itr++;
             }
+            
+            // creates right turn command and then new street proceed command for the new street
             else // if (angleBet >= 180 && angleBet <= 359)
             {
                 DeliveryCommand commT;
@@ -160,6 +146,8 @@ bool DeliveryPlannerImpl::routeToCommand(list<StreetSegment>& route, vector<Deli
                 previous = (*itr).name;
                 itr++;
             }
+            
+            // increases distance for a proceed command until a new street is reached
             while (itr != route.end() && (*itr).name == previous)
             {
                 double dist = distanceEarthMiles((*itr).start, (*itr).end);
@@ -167,12 +155,13 @@ bool DeliveryPlannerImpl::routeToCommand(list<StreetSegment>& route, vector<Deli
                 previous = (*itr).name; // name of SS
                 itr++;
             }
-            commands.push_back(comm);
+            commands.push_back(comm); // push back that command
         }
     }
     return true;
 }
 
+// convert angle to string direction
 string DeliveryPlannerImpl::directionString(double angle) const
 {
     if (angle >= 0 && angle < 22.5)

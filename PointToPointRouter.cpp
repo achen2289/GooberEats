@@ -21,6 +21,7 @@ private:
     // gcPair used to place GeoCoords into priority queue based on an empirical and heuristic value
     struct gcPair
     {
+        // gcPair takes in current GC, previous GC, and final GC
         gcPair(GeoCoord current, GeoCoord previous, GeoCoord finalDest)
         : curr(current), prev(previous), final(finalDest)
         {}
@@ -37,7 +38,7 @@ private:
             double h_this = distanceEarthMiles(this->curr, this->final);
             double g_other = distanceEarthMiles(other.prev, other.curr);
             double h_other = distanceEarthMiles(other.curr, other.final);
-            return (g_this + h_this) > (g_other + h_other);
+            return (g_this + h_this) > (g_other + h_other); // compare sum of g and h values
         }
     };
 };
@@ -92,6 +93,8 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
                     if ((*itr).end == end)
                     {
                         StreetSegment* prev = previousSS.find((*itr).end); // find SS leading to end GC
+                        
+                        // loop through street segments leading to final destination
                         while (prev->start != start)
                         {
                             route.push_front(*prev);
@@ -104,7 +107,7 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
             }
         }
     }
-    return BAD_COORD; // start geocoord does not lead to anywhere
+    return NO_ROUTE; // start geocoord does not lead to anywhere
 }
 
 //******************** PointToPointRouter functions ***************************

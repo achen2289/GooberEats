@@ -42,6 +42,7 @@ void DeliveryOptimizerImpl::optimizeDeliveryOrder(
     {
         oldCrowDistance += distanceEarthMiles(deliveries[i-1].location, deliveries[i].location);
     }
+    oldCrowDistance += distanceEarthMiles(deliveries[deliveries.size()-1].location, depot);
     
     vector<DeliveryRequest> tempDeliveries; // empty
     swap(tempDeliveries, deliveries); // deliveries now empty, temp contains deliveries elements
@@ -69,6 +70,7 @@ void DeliveryOptimizerImpl::optimizeDeliveryOrder(
     {
         newCrowDistance += distanceEarthMiles(deliveries[i-1].location, deliveries[i].location);
     }
+    newCrowDistance += distanceEarthMiles(deliveries[deliveries.size()-1].location, depot);
 }
 
 //******************** DeliveryOptimizer functions ****************************

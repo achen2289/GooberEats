@@ -102,7 +102,7 @@ void ExpandableHashMap<KeyType, ValueType>::associate(const KeyType& key, const 
             {
                 unsigned int h = getHashResult((*itr)->m_key, m_buckets);
                 m_hashTable[h].push_back(*itr);
-                *itr = nullptr;
+                *itr = nullptr; // free old hash table pointers from data
             }
         }
     }
@@ -136,6 +136,7 @@ const ValueType* ExpandableHashMap<KeyType, ValueType>::find(const KeyType& key)
 template<typename KeyType, typename ValueType>
 void ExpandableHashMap<KeyType, ValueType>::clearMap()
 {
+    // delete all dynamically allocated data
     for (auto itr = m_hashTable.begin(); itr != m_hashTable.end(); )
     {
         for (auto itr2 = (*itr).begin(); itr2 != (*itr).end(); )
