@@ -12,8 +12,6 @@ public:
         vector<DeliveryRequest>& deliveries,
         double& oldCrowDistance,
         double& newCrowDistance) const;
-private:
-    const StreetMap* m_sm;
 };
 
 DeliveryOptimizerImpl::DeliveryOptimizerImpl(const StreetMap* sm)
