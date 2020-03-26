@@ -101,6 +101,10 @@ DeliveryResult PointToPointRouterImpl::generatePointToPointRoute(
                             totalDistanceTravelled += distanceEarthMiles(prev->end, prev->start);
                             prev = previousSS.find(prev->start);
                         }
+                        
+                        // add last street segment to get back to starting location and increment distance
+                        route.push_front(*prev);
+                        totalDistanceTravelled += distanceEarthMiles(prev->end, prev->start);
                         return DELIVERY_SUCCESS;
                     }
                 }
